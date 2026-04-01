@@ -1,7 +1,8 @@
-Simple Rust Web Crawler
+# Simple Rust Web Crawler: Crawly
 
 A lightweight, asynchronous web crawler built with Rust. This project demonstrates how to use tokio for async runtime, reqwest for HTTP requests, and scraper for HTML parsing to recursively discover and visit links within the same domain.
-🚀 Features
+
+### 🚀 Features
 
     Asynchronous Crawling: Built on tokio and reqwest for efficient, non-blocking I/O.
 
@@ -13,7 +14,7 @@ A lightweight, asynchronous web crawler built with Rust. This project demonstrat
 
     Comprehensive Testing: Includes unit tests and integration tests with mockito for mocking HTTP servers.
 
-🛠️ Architecture
+### 🛠️ Architecture
 
 The project is divided into three main modules:
 
@@ -23,14 +24,14 @@ The project is divided into three main modules:
 
     parser.rs: Responsible for extracting links from HTML strings and resolving them against the base URL.
 
-📥 Getting Started
-Prerequisites
+### 📥 Getting Started
+#### Prerequisites
 
     Rust (1.60+)
 
     Cargo
 
-Installation & Running
+#### Installation & Running
 
     Clone the repository.
 
@@ -41,14 +42,14 @@ Installation & Running
 
     By default, it is configured to crawl https://crawler-test.com/.
 
-Running Tests
+#### Running Tests
 
 The project includes a suite of tests covering URL resolution, HTML parsing, and crawler logic:
 Bash
 
-cargo test
+`cargo test`
 
-📦 Dependencies
+### 📦 Dependencies
 
     tokio: Async runtime.
 
@@ -60,7 +61,7 @@ cargo test
 
     mockito: (Dev dependency) HTTP mocking for tests.
 
-⚠️ Limitations
+### ⚠️ Limitations
 
     Single-threaded execution: While async, it currently processes URLs sequentially from the queue.
 
