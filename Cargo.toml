@@ -1,0 +1,14 @@
+[package]
+name = "crawly"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+reqwest = "0.13.2"
+scraper = "0.26.0"
+tokio = { version = "1.50.0", features = ["rt", "rt-multi-thread", "macros"] }
+url = "2.5.8"
+
+[dev-dependencies]
+mockito = "1"
+tokio = { version = "1", features = ["rt", "macros"] }
