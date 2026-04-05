@@ -14,7 +14,7 @@ pub fn parse_html_for_links(base: &Url, html: &str) -> Vec<Url> {
                 if let Some(href) = element.value().attr(HREF_ATTR) {
                     match build_url(base, href) {
                         Ok(url) => res.push(url),
-                        Err(e) => println!("Failed to parse URL: {}", e),
+                        Err(e) => println!("Failed to parse URL: {}, {}", e, href),
                     }
                 }
             }
