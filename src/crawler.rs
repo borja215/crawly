@@ -37,13 +37,13 @@ impl Crawler {
                 .filter(|&found_url| found_url.domain() == self.initial_url.domain())
                 .collect::<Vec<&Url>>();
 
-            for url in filtered_urls {
-                println!("- {}", url);
-                if self.cached_urls.contains(url.as_str()) {
+            for child_url in filtered_urls {
+                println!("- {}", child_url);
+                if self.cached_urls.contains(child_url.as_str()) {
                     continue;
                 }
-                self.cached_urls.insert(url.to_string());
-                self.queued_urls.push(url.clone());
+                self.cached_urls.insert(child_url.to_string());
+                self.queued_urls.push(child_url.clone());
             }
         }
 
