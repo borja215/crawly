@@ -165,7 +165,6 @@ dependencies = [
  "mockito",
  "reqwest",
  "scraper",
- "serde",
  "serde_json",
  "tokio",
  "url",
