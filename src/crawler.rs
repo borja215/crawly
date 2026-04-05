@@ -1,12 +1,14 @@
 use crate::parser::parse_html_for_links;
 use reqwest::Client;
-use std::collections::{HashSet, VecDeque};
+use std::collections::{HashMap, HashSet, VecDeque};
+use futures::future::join_all;
 use url::Url;
 
 pub struct Crawler {
     initial_url: Url,
-    cached_urls: HashSet<String>,
+    cached_urls: HashSet<Url>,
     queued_urls: VecDeque<Url>,
+    site_map: HashMap<String, Vec<String>>,
     client: Client,
 }
 
@@ -15,48 +17,62 @@ impl Crawler {
         let queued_urls = VecDeque::from([initial_url.clone()]);
 
         let mut cached_urls = HashSet::new();
-        cached_urls.insert(initial_url.to_string());
+        cached_urls.insert(initial_url.clone());
+
+        let site_map = HashMap::new();
 
         Crawler {
             initial_url: initial_url.clone(),
             cached_urls,
             queued_urls,
+            site_map,
             client,
         }
     }
 
     pub async fn crawl(&mut self) -> Result<(), Box<dyn std::error::Error>> {
-        while let Some(url) = self.queued_urls.pop_front() {
-            println!("Crawling {}", url);
-            let resp = self.fetch_page(url).await;
+        while !self.queued_urls.is_empty() {
+            let urls: Vec<Url> = self.queued_urls.drain(..).collect();
 
-            let urls = parse_html_for_links(&self.initial_url, &resp);
+            let futures: Vec<_> = urls.into_iter().map(async |url| (url.clone(), self.process_page(&url).await)).collect();
 
-            let filtered_urls = urls
-                .iter()
-                .filter(|&found_url| found_url.domain() == self.initial_url.domain())
-                .collect::<Vec<&Url>>();
+            let results: Vec<(Url, Vec<Url>)> = join_all(futures).await;
 
-            for child_url in filtered_urls {
-                println!("- {}", child_url);
-                if self.cached_urls.contains(child_url.as_str()) {
-                    continue;
+            for pair in results {
+                for child in &pair.1[..] {
+                    if self.cached_urls.contains(child) {
+                        continue;
+                    }
+                    self.cached_urls.insert(child.clone());
+                    self.queued_urls.push_back(child.clone());
                 }
-                self.cached_urls.insert(child_url.to_string());
-                self.queued_urls.push_back(child_url.clone());
+
+                self.site_map.insert(pair.0.to_string(), pair.1.into_iter().map(|url| url.to_string()).collect());
             }
         }
 
+        println!("{:?}", self.site_map);
         Ok(())
     }
 
-    async fn fetch_page(&mut self, url: Url) -> String {
+    async fn process_page(&self, url: &Url) -> Vec<Url>{
+        let resp = self.fetch_page(url).await;
+
+        let urls = parse_html_for_links(&self.initial_url, &resp);
+
+        urls
+            .into_iter()
+            .filter(|found_url| found_url.domain() == self.initial_url.domain())
+            .collect::<Vec<Url>>()
+    }
+
+    async fn fetch_page(&self, url:&Url) -> String {
         let empty_response = "".to_string();
-        match self.client.get(url).send().await {
+        match self.client.get(url.as_str()).send().await {
             Ok(response) => match response.text().await {
                 Ok(text) => text,
                 Err(e) => {
-                    println!("Error encountered converting response to text {}", e);
+                    println!("Error encountered converting response to text {} {}", e, url);
                     empty_response
                 }
             },
@@ -81,7 +97,7 @@ mod tests {
         let crawler = Crawler::new(url.clone(), client);
 
         assert_eq!(crawler.queued_urls, vec![url.clone()]);
-        assert!(crawler.cached_urls.contains(url.as_str()));
+        assert!(crawler.cached_urls.contains(&url));
         assert_eq!(crawler.initial_url, url);
     }
 
