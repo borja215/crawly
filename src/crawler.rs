@@ -51,7 +51,8 @@ impl Crawler {
             }
         }
 
-        println!("{:?}", self.site_map);
+        let json = serde_json::to_string(&self.site_map)?;
+        std::fs::write("sitemap.json", &json)?;
         Ok(())
     }
 
