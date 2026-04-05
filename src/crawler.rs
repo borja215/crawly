@@ -1,18 +1,18 @@
 use crate::parser::parse_html_for_links;
 use reqwest::Client;
-use std::collections::HashSet;
+use std::collections::{HashSet, VecDeque};
 use url::Url;
 
 pub struct Crawler {
     initial_url: Url,
     cached_urls: HashSet<String>,
-    queued_urls: Vec<Url>,
+    queued_urls: VecDeque<Url>,
     client: Client,
 }
 
 impl Crawler {
     pub(crate) fn new(initial_url: Url, client: Client) -> Self {
-        let queued_urls = vec![initial_url.clone()];
+        let queued_urls = VecDeque::from([initial_url.clone()]);
 
         let mut cached_urls = HashSet::new();
         cached_urls.insert(initial_url.to_string());
@@ -26,7 +26,7 @@ impl Crawler {
     }
 
     pub async fn crawl(&mut self) -> Result<(), Box<dyn std::error::Error>> {
-        while let Some(url) = self.queued_urls.pop() {
+        while let Some(url) = self.queued_urls.pop_front() {
             println!("Crawling {}", url);
             let resp = self.fetch_page(url).await;
 
@@ -43,7 +43,7 @@ impl Crawler {
                     continue;
                 }
                 self.cached_urls.insert(child_url.to_string());
-                self.queued_urls.push(child_url.clone());
+                self.queued_urls.push_back(child_url.clone());
             }
         }
 
